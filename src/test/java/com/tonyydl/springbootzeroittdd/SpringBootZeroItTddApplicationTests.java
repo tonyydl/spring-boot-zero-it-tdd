@@ -11,6 +11,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 class SpringBootZeroItTddApplicationTests {
@@ -36,22 +38,29 @@ class SpringBootZeroItTddApplicationTests {
 
     @Test
     void crud() {
-        webTestClient
+        // arrange
+        MemberDto request = MemberDto
+                .builder()
+                .id(null)
+                .name("Tony, Yang")
+                .age(18)
+                .height(174F)
+                .build();
+        // act
+        final MemberDto responseBody = webTestClient
                 .post()
                 .uri("http://localhost:%d/members".formatted(port))
-                .bodyValue(
-                        MemberDto
-                                .builder()
-                                .id(null)
-                                .name("Tony, Yang")
-                                .age(18)
-                                .height(174F)
-                                .build()
-                )
+                .bodyValue(request)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(MemberDto.class)
                 .returnResult()
                 .getResponseBody();
+
+        // assert
+        assertThat(responseBody.getId()).isGreaterThan(0);
+        assertThat(responseBody.getName()).isEqualTo(request.getName());
+        assertThat(responseBody.getAge()).isEqualTo(request.getAge());
+        assertThat(responseBody.getHeight()).isEqualTo(request.getHeight());
     }
 }
