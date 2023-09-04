@@ -62,5 +62,57 @@ class SpringBootZeroItTddApplicationTests {
         assertThat(responseBody.getName()).isEqualTo(request.getName());
         assertThat(responseBody.getAge()).isEqualTo(request.getAge());
         assertThat(responseBody.getHeight()).isEqualTo(request.getHeight());
+
+        // act
+        final MemberDto body = webTestClient
+                .get()
+                .uri("http://localhost:%d/members/%d".formatted(port, responseBody.getId()))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(MemberDto.class)
+                .returnResult().getResponseBody();
+
+        // assert
+        assertThat(body.getId()).isEqualTo(responseBody.getId());
+        assertThat(body.getName()).isEqualTo(responseBody.getName());
+        assertThat(body.getAge()).isEqualTo(responseBody.getAge());
+        assertThat(body.getHeight()).isEqualTo(responseBody.getHeight());
+
+        // arrange
+        MemberDto updateRequest = MemberDto
+                .builder()
+                .id(responseBody.getId())
+                .name("Tony, Yang")
+                .age(19)
+                .height(175F)
+                .build();
+
+        // act
+        final MemberDto memberDto = webTestClient
+                .patch()
+                .uri("http://localhost:%d/members".formatted(port))
+                .bodyValue(updateRequest)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(MemberDto.class)
+                .returnResult().getResponseBody();
+
+        // assert
+        assertThat(memberDto.getAge()).isEqualTo(updateRequest.getAge());
+        assertThat(memberDto.getHeight()).isEqualTo(updateRequest.getHeight());
+
+        // act
+        webTestClient
+                .delete()
+                .uri("http://localhost:%d/members/%d".formatted(port, responseBody.getId()))
+                .exchange()
+                .expectStatus().isNoContent();
+
+        // assert
+        webTestClient
+                .get()
+                .uri("http://localhost:%d/members/%d".formatted(port, responseBody.getId()))
+                .exchange()
+                .expectStatus().isNotFound();
     }
 }
